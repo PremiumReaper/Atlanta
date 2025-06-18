@@ -65,7 +65,7 @@ local concat = table.concat
 
 -- library init
 local library = {
-	directory = "panichook11",
+	directory = "PremiumReaper",
 	folders = {
 		"/fonts",
 		"/configs",
@@ -3976,18 +3976,19 @@ end
 
 function library:list(options)
 	local cfg = {
-		callback = options and options.callback or function() end,
+        callback = options and options.callback or function() end,
 
-		scale = options.size or 232,
-		items = options.items or { "1", "2", "3" },
-		-- order = options.order or 1,
-		placeholdertext = options.placeholder or options.placeholdertext or "search here...",
-		visible = options.visible or true,
+        scale = options.size or 232,
+        items = options.items or { "1", "2", "3" },
+        placeholdertext = options.placeholder or options.placeholdertext or "search here...",
+        visible = options.visible or true,
 
-		option_instances = {},
-		current_instance = nil,
-		flag = options.flag or "SET A FLAG U NIGGER",
-	}
+        option_instances = {},
+        current_instance = nil,
+        flag = options.flag or "SET_A_FLAG",
+        multi = options.multi or false, -- enable multi-select
+        multi_items = {},              -- store selected items
+    }
 
 	-- instances
 	local list_holder = library:create("TextLabel", {
@@ -4161,33 +4162,45 @@ function library:list(options)
 	end
 
 	function cfg.refresh_options(options)
-		if type(options) == "function" then
-			return
-		end
+        if type(options) == "function" then
+            return
+        end
 
-		for _, v in next, cfg.option_instances do
-			v:Destroy()
-		end
+        for _, v in next, cfg.option_instances do
+            v:Destroy()
+        end
 
-		for _, option in next, options do
-			local button = cfg.render_option(option)
+        cfg.option_instances = {}
 
-			insert(cfg.option_instances, button)
+        for _, option in next, options do
+            local button = cfg.render_option(option)
 
-			button.MouseButton1Click:Connect(function()
-				if cfg.current_instance and cfg.current_instance ~= button then
-					cfg.current_instance.TextColor3 = themes.preset.text
-				end
+            insert(cfg.option_instances, button)
 
-				cfg.current_instance = button
-				button.TextColor3 = themes.preset.accent
-
-				flags[cfg.flag] = button.text
-
-				cfg.callback(button.text)
-			end)
-		end
-	end
+            button.MouseButton1Click:Connect(function()
+                if cfg.multi then
+                    local idx = find(cfg.multi_items, button.Text)
+                    if idx then
+                        remove(cfg.multi_items, idx)
+                        button.TextColor3 = themes.preset.text
+                    else
+                        insert(cfg.multi_items, button.Text)
+                        button.TextColor3 = themes.preset.accent
+                    end
+                    flags[cfg.flag] = cfg.multi_items
+                    cfg.callback(cfg.multi_items)
+                else
+                    if cfg.current_instance and cfg.current_instance ~= button then
+                        cfg.current_instance.TextColor3 = themes.preset.text
+                    end
+                    cfg.current_instance = button
+                    button.TextColor3 = themes.preset.accent
+                    flags[cfg.flag] = button.Text
+                    cfg.callback(button.Text)
+                end
+            end)
+        end
+    end
 
 	function cfg.filter_options(text)
 		for _, v in next, cfg.option_instances do
@@ -5004,4 +5017,4 @@ function library:playerlist(options)
 	return setmetatable(cfg, library)
 end
 
-return library
+return { library, themes, flags }

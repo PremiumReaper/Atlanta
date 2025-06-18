@@ -5452,7 +5452,7 @@ section:button({
 		)
 		local data = apiRequest.data[random(1, #apiRequest.data)]
 
-		if data.playing <= flags["max_players"] theni
+		if data.playing <= flags["max_players"] then
 			game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, data.id)
 		end
 	end,

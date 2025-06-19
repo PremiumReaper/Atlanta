@@ -4219,8 +4219,9 @@ function library:list(options)
 	end
 
 	function cfg.set(value)
+		local is_table = type(value) == "table"
 		for _, buttons in next, cfg.option_instances do
-			if buttons.Text == value then
+			if (is_table and table.find(value, buttons.Text)) or (not is_table and buttons.Text == value) then
 				buttons.TextColor3 = themes.preset.accent
 			else
 				buttons.TextColor3 = themes.preset.text

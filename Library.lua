@@ -5023,6 +5023,241 @@ function library:playerlist(options)
 	return setmetatable(cfg, library)
 end
 
+function library:build_settings_tab(window, themes, flags)
+    local Settings = window:tab({ name = "Settings" })
+
+    -- Options Section
+    local column = Settings:column()
+    local section = column:section({ name = "Options" })
+    local old_config = library:get_config()
+    config_holder = section:list({ flag = "config_name_list" })
+    section:textbox({ flag = "config_name_text_box" })
+    section:button_holder({})
+    section:button({
+        name = "Create",
+        callback = function()
+            writefile(library.directory .. "/configs/" .. flags["config_name_text_box"] .. ".cfg", library:get_config())
+            library:config_list_update()
+        end,
+    })
+    section:button({
+        name = "Delete",
+        callback = function()
+            delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
+            library:config_list_update()
+        end,
+    })
+    section:button_holder({})
+    section:button({
+        name = "Load",
+        callback = function()
+            library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))
+            library:notification({
+                text = "Loaded Config: " .. flags["config_name_list"],
+                time = 3,
+            })
+        end,
+    })
+    section:button({
+        name = "Save",
+        callback = function()
+            writefile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg", library:get_config())
+            library:config_list_update()
+            library:notification({
+                text = "Saved Config: " .. flags["config_name_list"],
+                time = 3,
+            })
+        end,
+    })
+    section:button_holder({})
+    section:button({
+        name = "Refresh Configs",
+        callback = function()
+            library:config_list_update()
+        end,
+    })
+    section:button_holder({})
+    section:button({
+        name = "Unload Config",
+        callback = function()
+            library:load_config(old_config)
+        end,
+    })
+    section:button({
+        name = "Unload Menu",
+        callback = function()
+            library:load_config(old_config)
+            for _, gui in ipairs(library.guis) do
+                gui:Destroy()
+            end
+            for _, connection in ipairs(library.connections) do
+                connection:Disconnect()
+            end
+        end,
+    })
+
+    -- Theme Section
+    local column2 = Settings:column()
+    local section2 = column2:section({ name = "Theme" })
+    section2:label({ name = "Accent" }):colorpicker({
+        name = "Accent",
+        color = themes.preset.accent,
+        flag = "accent",
+        callback = function(color, alpha)
+            library:update_theme("accent", color)
+        end,
+    })
+    section2
+        :label({ name = "Contrast" })
+        :colorpicker({
+            name = "Low",
+            color = themes.preset.low_contrast,
+            flag = "low_contrast",
+            callback = function(color)
+                if flags["high_contrast"] and flags["low_contrast"] then
+                    library:update_theme(
+                        "contrast",
+                        ColorSequence.new({
+                            ColorSequenceKeypoint.new(0, flags["low_contrast"].Color),
+                            ColorSequenceKeypoint.new(1, flags["high_contrast"].Color),
+                        })
+                    )
+                end
+            end,
+        })
+        :colorpicker({
+            name = "High",
+            color = themes.preset.high_contrast,
+            flag = "high_contrast",
+            callback = function(color)
+                library:update_theme(
+                    "contrast",
+                    ColorSequence.new({
+                        ColorSequenceKeypoint.new(0, flags["low_contrast"].Color),
+                        ColorSequenceKeypoint.new(1, flags["high_contrast"].Color),
+                    })
+                )
+            end,
+        })
+    section2:label({ name = "Inline" }):colorpicker({
+        name = "Inline",
+        color = themes.preset.inline,
+        callback = function(color, alpha)
+            library:update_theme("inline", color)
+        end,
+    })
+    section2:label({ name = "Outline" }):colorpicker({
+        name = "Outline",
+        color = themes.preset.outline,
+        callback = function(color, alpha)
+            library:update_theme("outline", color)
+        end,
+    })
+    section2
+        :label({ name = "Text Color" })
+        :colorpicker({
+            name = "Main",
+            color = themes.preset.text,
+            callback = function(color, alpha)
+                library:update_theme("text", color)
+            end,
+        })
+        :colorpicker({
+            name = "Outline",
+            color = themes.preset.text_outline,
+            callback = function(color, alpha)
+                library:update_theme("text_outline", color)
+            end,
+        })
+    section2:label({ name = "Glow" }):colorpicker({
+        name = "Glow",
+        color = themes.preset.glow,
+        callback = function(color, alpha)
+            library:update_theme("glow", color)
+        end,
+    })
+    section2:label({ name = "UI Bind" }):keybind({
+        callback = window.set_menu_visibility,
+        key = Enum.KeyCode.Insert,
+    })
+    section2:toggle({
+        name = "Keybind List",
+        flag = "keybind_list",
+        callback = function(bool)
+            library.keybind_list_frame.Visible = bool
+        end,
+    })
+    section2:toggle({
+        name = "Watermark",
+        flag = "watermark",
+        callback = function(bool)
+            if window.watermark then
+                window.watermark.set_visible(bool)
+            end
+        end,
+    })
+    section2:button_holder({})
+    section2:button({
+        name = "Copy JobId",
+        callback = function()
+            setclipboard(game.JobId)
+        end,
+    })
+    section2:button_holder({})
+    section2:button({
+        name = "Copy GameID",
+        callback = function()
+            setclipboard(game.GameId)
+        end,
+    })
+    section2:button_holder({})
+    section2:button({
+        name = "Copy Join Script",
+        callback = function()
+            setclipboard(
+                'game:GetService("TeleportService"):TeleportToPlaceInstance('
+                    .. game.PlaceId
+                    .. ', "'
+                    .. game.JobId
+                    .. '", game.Players.LocalPlayer)'
+            )
+        end,
+    })
+    section2:button_holder({})
+    section2:button({
+        name = "Rejoin",
+        callback = function()
+            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
+        end,
+    })
+    section2:button_holder({})
+    section2:button({
+        name = "Join New Server",
+        callback = function()
+            local apiRequest = game:GetService("HttpService"):JSONDecode(
+                game:HttpGetAsync(
+                    "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+                )
+            )
+            local data = apiRequest.data[math.random(1, #apiRequest.data)]
+
+            if data.playing <= flags["max_players"] then
+                game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, data.id)
+            end
+        end,
+    })
+    section2:slider({
+        name = "Max Players",
+        flag = "max_players",
+        min = 0,
+        max = 40,
+        default = 15,
+        interval = 1,
+    })
+
+    return Settings
+end
+
 return { 
     library = library,
     themes = themes,
@@ -5486,4 +5721,153 @@ for index, value in pairs(themes.preset) do
         library:update_theme(index, value)
     end)
 end
+
+# Widget Config Options and Methods
+
+## window(options)
+- name: string (window title)
+- size: UDim2 (window size)
+- position: UDim2 (window position)
+- visible: boolean
+- Methods:
+    - :tab(options) → tab
+    - :open()
+    - :close()
+    - :toggle()
+    - :destroy()
+
+## tab(options)
+- name: string (tab label)
+- icon: string (optional)
+- Methods:
+    - :section(options) → section
+    - :column() → column
+    - :open_tab()
+    - :set_visible(bool)
+
+## column(options)
+- width: number (optional)
+- Methods:
+    - :section(options) → section
+
+## section(options)
+- name: string (section label)
+- Methods:
+    - :slider(options) → slider
+    - :toggle(options) → toggle
+    - :dropdown(options) → dropdown
+    - :list(options) → list
+    - :textbox(options) → textbox
+    - :button_holder(options) → button_holder
+    - :button(options) → button
+    - :label(options) → label
+    - :colorpicker(options) → colorpicker
+    - :keybind(options) → keybind
+
+## slider(options)
+- name: string
+- flag: string
+- min: number
+- max: number
+- default: number
+- increment: number
+- callback: function(value)
+- Methods:
+    - :set(value)
+    - :get()
+
+## toggle(options)
+- name: string
+- flag: string
+- default: boolean
+- callback: function(state)
+- Methods:
+    - :set(bool)
+    - :get()
+
+## dropdown(options)
+- name: string
+- flag: string
+- items: table (list of options)
+- default: string or table
+- multi: boolean (allow multiple selection)
+- callback: function(value)
+- Methods:
+    - :refresh_options(table)
+    - :set(value)
+    - :get()
+
+## list(options)
+- name: string
+- flag: string
+- items: table (list of options)
+- default: string or table
+- multi: boolean
+- callback: function(value)
+- Methods:
+    - :refresh_options(table)
+    - :set(value)
+    - :get()
+
+## textbox(options)
+- name: string
+- flag: string
+- default: string
+- placeholder: string
+- callback: function(text)
+- Methods:
+    - :set(text)
+    - :get()
+
+## button_holder(options)
+- No config options (acts as a container)
+- Methods:
+    - :button(options) → button
+
+## button(options)
+- name: string
+- callback: function()
+- Methods:
+    - :set_text(string)
+    - :click()
+
+## label(options)
+- name: string
+- Methods:
+    - :set_text(string)
+
+## colorpicker(options)
+- name: string
+- flag: string
+- color: Color3
+- alpha: number
+- callback: function(color, alpha)
+- Methods:
+    - :set(color, alpha)
+    - :get()
+
+## keybind(options)
+- name: string
+- flag: string
+- key: Enum.KeyCode
+- mode: string ("toggle", "hold", "always")
+- default: boolean
+- callback: function(active)
+- Methods:
+    - :set(key)
+    - :get()
+
+## playerlist(options)
+- callback: function(selected_players)
+- Methods:
+    - :refresh_players()
+    - :set(selected_players)
+    - :get()
+
+## watermark(options)
+- text: string
+- Methods:
+    - :change_text(string)
+    - :set_visible(bool)
+
 ]]

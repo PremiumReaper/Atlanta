@@ -5028,6 +5028,9 @@ function library:build_settings_tab(window, themes, flags)
     local Settings = window:tab({ name = "Settings" })
 
     -- Options Section
+	local watermark = window:watermark({
+		default = os.date("Vesteria WIP %d/%m/%Y - %H:%M:%S"),
+	})
     local column = Settings:column()
     local section = column:section({ name = "Options" })
     local old_config = library:get_config()
@@ -5192,8 +5195,8 @@ function library:build_settings_tab(window, themes, flags)
         name = "Watermark",
         flag = "watermark",
         callback = function(bool)
-            if window.watermark then
-                window.watermark.set_visible(bool)
+            if watermark then
+                watermark.set_visible(bool)
             end
         end,
     })

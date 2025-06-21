@@ -4662,6 +4662,8 @@ function library:label(options)
 		TextLabel.Text = text
 	end
 
+	cfg.set_element_visible(cfg.visible)
+
 	return setmetatable(cfg, library)
 end
 

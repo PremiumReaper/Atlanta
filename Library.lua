@@ -2147,7 +2147,7 @@ function library:slider(options)
 		suffix = options.suffix or "",
 		flag = options.flag or tostring(2 ^ 789),
 		callback = options.callback or function() end,
-		visible = options.visible or true,
+		isible = options.visible == nil and true or options.visible,
 
 		min = options.min or options.minimum or 0,
 		max = options.max or options.maximum or 100,
@@ -2393,7 +2393,7 @@ function library:toggle(options)
 		callback = options.callback or function() end,
 		default = options.default or false,
 		colorpicker = options.color or nil,
-		visible = options.visible or true,
+		isible = options.visible == nil and true or options.visible,
 		tooltip = options.tooltip or nil,
 	}
 
@@ -3531,7 +3531,7 @@ function library:dropdown(options)
 		items = options.items or { "1", "2", "3" },
 		callback = options.callback or function() end,
 		multi = options.multi or false,
-		visible = options.visible or true,
+		isible = options.visible == nil and true or options.visible,
 
 		open = false,
 		option_instances = {},
@@ -3987,7 +3987,7 @@ function library:list(options)
         scale = options.size or 232,
         items = options.items or { "1", "2", "3" },
         placeholdertext = options.placeholder or options.placeholdertext or "search here...",
-        visible = options.visible or true,
+        isible = options.visible == nil and true or options.visible,
 
         option_instances = {},
         current_instance = nil,
@@ -4251,7 +4251,7 @@ function library:textbox(options)
 		default = options.default,
 		flag = options.flag or "SET ME NIGGA",
 		callback = options.callback or function() end,
-		visible = options.visible or true,
+		isible = options.visible == nil and true or options.visible,
 	}
 
 	-- instances
@@ -4415,7 +4415,7 @@ end
 function library:button_holder(options)
 	local cfg = {
 		flag = options.flag or "hi",
-		visible = options.visible or true,
+		isible = options.visible == nil and true or options.visible,
 	}
 
 	local button_holder = library:create("TextLabel", {

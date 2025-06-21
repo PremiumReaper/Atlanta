@@ -4572,7 +4572,10 @@ function library:button(options)
 end
 
 function library:label(options)
-	local cfg = { name = options.text or options.name or "Label" }
+	local cfg = { 
+		name = options.text or options.name or "Label"
+		visible = options.visible == nil and true or options.visible,
+	}
 
 	local dropdown = library:create("TextLabel", {
 		Parent = self.holder,
@@ -4648,6 +4651,12 @@ function library:label(options)
 		Parent = TextLabel,
 		Name = "",
 	})
+
+	function cfg.set_element_visible(bool)
+		if TextLabel then
+			TextLabel.Visible = bool
+		end
+	end
 
 	function cfg.change_text(text)
 		TextLabel.Text = text

@@ -4210,7 +4210,7 @@ function library:list(options)
 
 	function cfg.filter_options(text)
 		for _, v in next, cfg.option_instances do
-			if string.find(v.Text, text) then
+			if string.find(string.lower(v.Text), string.lower(text)) then
 				v.Visible = true
 			else
 				v.Visible = false

@@ -4573,7 +4573,7 @@ end
 
 function library:label(options)
 	local cfg = { 
-		name = options.text or options.name or "Label"
+		name = options.text or options.name or "Label",
 		visible = options.visible == nil and true or options.visible,
 	}
 

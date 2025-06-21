@@ -5259,6 +5259,14 @@ function library:build_settings_tab(window, themes, flags)
         interval = 1,
     })
 
+	library:config_list_update()
+
+	for index, value in pairs(themes.preset) do
+		pcall(function()
+			library:update_theme(index, value)
+		end)
+	end
+
     return Settings
 end
 
@@ -5726,6 +5734,7 @@ for index, value in pairs(themes.preset) do
     end)
 end
 
+--[[
 # Widget Config Options and Methods
 
 ## window(options)

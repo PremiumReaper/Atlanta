@@ -3915,6 +3915,15 @@ function library:dropdown(options)
 
 		cfg.option_instances = {}
 
+		print(refreshed_list)
+		for i, v in pairs(refreshed_list) do
+			print(i, v)
+		end
+		print("with next")
+		for i, v in next, refreshed_list do
+			print(i, v)
+		end
+		
 		for i, v in next, refreshed_list do
 			local TextButton = library:create("TextButton", {
 				Parent = contrast,

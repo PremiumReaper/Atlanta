@@ -3909,7 +3909,57 @@ function library:dropdown(options)
 	end
 
 	function cfg:refresh_options(refreshed_list)
-		print(refreshed_list)
+		for _, v in next, cfg.option_instances do
+			v:Destroy()
+		end
+
+		cfg.option_instances = {}
+
+		for i, v in next, refreshed_list do
+			local TextButton = library:create("TextButton", {
+				Parent = contrast,
+				FontFace = library.font,
+				TextColor3 = themes.preset.text,
+				BorderColor3 = rgb(0, 0, 0),
+				Size = dim2(1, 0, 0, 0),
+				BackgroundTransparency = 1,
+				BorderSizePixel = 0,
+				TextWrapped = true,
+				AutomaticSize = Enum.AutomaticSize.Y,
+				TextSize = 12,
+				TextXAlignment = Enum.TextXAlignment.Left,
+				ZIndex = 2,
+				Text = v,
+				BackgroundColor3 = rgb(255, 255, 255),
+			})
+			library:apply_theme(TextButton, "accent", "TextColor3")
+
+			library:create("UIStroke", {
+				Parent = TextButton,
+				LineJoinMode = Enum.LineJoinMode.Miter,
+			})
+
+			insert(cfg.option_instances, TextButton)
+
+			TextButton.MouseButton1Down:Connect(function()
+				if cfg.multi then
+					local selected_index = find(cfg.multi_items, TextButton.Text)
+
+					if selected_index then
+						remove(cfg.multi_items, selected_index)
+					else
+						insert(cfg.multi_items, TextButton.Text)
+					end
+
+					cfg.set(cfg.multi_items)
+				else
+					cfg.set_visible(false)
+					cfg.open = false
+
+					cfg.set(TextButton.Text)
+				end
+			end)
+		end
 	end
 
 	dropdown.MouseButton1Click:Connect(function()

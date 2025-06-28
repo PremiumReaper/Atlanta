@@ -1289,6 +1289,10 @@ function library:window(properties)
 		path.Enabled = bool
 		tooltip_sgui.Enabled = bool
 
+		print(library.current_element_open)
+		for i, v in pairs(library.current_element_open) do
+			print(i, v)
+		end
 		if library.current_element_open then
 			library.current_element_open.set_visible(false)
 			library.current_element_open.open = false

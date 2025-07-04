@@ -205,7 +205,7 @@ for _, path in next, library.folders do
 end
 
 if not isfile("main.ttf") then
-    writefile("main.ttf", game:HttpGet("https://files.catbox.moe/fksdez.ttf"))
+    writefile("main.ttf", game:HttpGet("https://github.com/PremiumReaper/Atlanta/raw/refs/heads/main/atlanta_font.ttf"))
 end
 
 local tahoma = {

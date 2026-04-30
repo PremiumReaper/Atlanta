@@ -426,6 +426,14 @@ function library:load_config(config_json)
 	end
 end
 
+function library:load_default_config()
+	if isfile(library.directory .. "/configs/default.cfg") then
+		self:load_config(readfile(library.directory .. "/configs/default.cfg"))
+		return true
+	end
+	return false
+end
+
 function library:round(number, float)
 	local multiplier = 1 / (float or 1)
 
@@ -5083,6 +5091,51 @@ function library:build_settings_tab(window, themes, flags)
                 text = "Saved Config: " .. flags["config_name_list"],
                 time = 3,
             })
+        end,
+    })
+    section:button_holder({})
+    section:button({
+        name = "Save as Default",
+        callback = function()
+            writefile(library.directory .. "/configs/default.cfg", library:get_config())
+            library:notification({
+                text = "Saved as Default Config",
+                time = 3,
+            })
+        end,
+    })
+    section:button({
+        name = "Load Default",
+        callback = function()
+            if isfile(library.directory .. "/configs/default.cfg") then
+                library:load_config(readfile(library.directory .. "/configs/default.cfg"))
+                library:notification({
+                    text = "Loaded Default Config",
+                    time = 3,
+                })
+            else
+                library:notification({
+                    text = "No Default Config Found",
+                    time = 3,
+                })
+            end
+        end,
+    })
+    section:button({
+        name = "Clear Default",
+        callback = function()
+            if isfile(library.directory .. "/configs/default.cfg") then
+                delfile(library.directory .. "/configs/default.cfg")
+                library:notification({
+                    text = "Cleared Default Config",
+                    time = 3,
+                })
+            else
+                library:notification({
+                    text = "No Default Config to Clear",
+                    time = 3,
+                })
+            end
         end,
     })
     section:button_holder({})

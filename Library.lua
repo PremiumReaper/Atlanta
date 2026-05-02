@@ -1436,7 +1436,7 @@ function library:refresh_notifications()
 			:Create(
 				notif,
 				TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut),
-				{ Position = dim2(0, 20, 0, 72 + (_ * 28)) }
+				{ Position = dim2(0, -20, 0, 300 + (_ * 28)) }
 			)
 			:Play()
 	end
@@ -1456,7 +1456,7 @@ function library:notification(properties)
 		Size = UDim2.new(0, 0, 0, 24),
 		BorderColor3 = rgb(0, 0, 0),
 		BorderSizePixel = 0,
-		Position = UDim2.new(0, 20, 0, 72 + (#library.notifications * 28)),
+		Position = UDim2.new(0, -20, 0, 300 + (#library.notifications * 28)),
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = themes.preset.outline,
 		AnchorPoint = Vector2.new(1, 0),

@@ -475,6 +475,8 @@ function library:apply_stroke(parent)
 end
 
 function library:create(instance, options)
+	setthreadidentity(7)
+
 	local ins = Instance.new(instance)
 
 	for prop, value in next, options do

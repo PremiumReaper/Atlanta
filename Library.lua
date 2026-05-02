@@ -1436,7 +1436,7 @@ function library:refresh_notifications()
 			:Create(
 				notif,
 				TweenInfo.new(0.3, Enum.EasingStyle.Exponential, Enum.EasingDirection.InOut),
-				{ Position = dim2(0, -20, 0, 300 + (_ * 28)) }
+				{ Position = dim2(1, -20, 0, 300 + (_ * 28)) }
 			)
 			:Play()
 	end
@@ -1456,10 +1456,10 @@ function library:notification(properties)
 		Size = UDim2.new(0, 0, 0, 24),
 		BorderColor3 = rgb(0, 0, 0),
 		BorderSizePixel = 0,
-		Position = UDim2.new(0, -20, 0, 300 + (#library.notifications * 28)),
+		Position = UDim2.new(1, -20, 0, 300 + (#library.notifications * 28)),
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = themes.preset.outline,
-		AnchorPoint = Vector2.new(0, 0),
+		AnchorPoint = Vector2.new(1, 0),
 	})
 
 	local watermark_inline = library:create("Frame", {
@@ -1558,7 +1558,7 @@ function library:notification(properties)
 		:Create(
 			watermark_outline,
 			TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-			{ AnchorPoint = Vector2.new(0, 0) }
+			{ AnchorPoint = Vector2.new(1, 0) }
 		)
 		:Play()
 
@@ -1580,7 +1580,7 @@ function library:notification(properties)
 			:Create(
 				watermark_outline,
 				TweenInfo.new(1, Enum.EasingStyle.Quad, Enum.EasingDirection.InOut),
-				{ AnchorPoint = Vector2.new(1, 0), BackgroundTransparency = 1 }
+				{ BackgroundTransparency = 1 }
 			)
 			:Play()
 

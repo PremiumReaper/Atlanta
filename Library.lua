@@ -1459,7 +1459,7 @@ function library:notification(properties)
 		Position = UDim2.new(0, -20, 0, 300 + (#library.notifications * 28)),
 		AutomaticSize = Enum.AutomaticSize.X,
 		BackgroundColor3 = themes.preset.outline,
-		AnchorPoint = Vector2.new(1, 0),
+		AnchorPoint = Vector2.new(0, 0),
 	})
 
 	local watermark_inline = library:create("Frame", {

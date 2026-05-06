@@ -199,29 +199,29 @@ local keys = {
 library.__index = library
 
 for _, path in next, library.folders do
-    if not isfolder(library.directory .. path) then
-        makefolder(library.directory .. path)
-    end
+	if not isfolder(library.directory .. path) then
+		makefolder(library.directory .. path)
+	end
 end
 
 if not isfile("main.ttf") then
-    writefile("main.ttf", game:HttpGet("https://github.com/PremiumReaper/Atlanta/raw/refs/heads/main/atlanta_font.ttf"))
+	writefile("main.ttf", game:HttpGet("https://github.com/PremiumReaper/Atlanta/raw/refs/heads/main/atlanta_font.ttf"))
 end
 
 local tahoma = {
-    name = "SmallestPixel7",
-    faces = {
-        {
-            name = "Regular",
-            weight = 400,
-            style = "normal",
-            assetId = getcustomasset("main.ttf"),
-        },
-    },
+	name = "SmallestPixel7",
+	faces = {
+		{
+			name = "Regular",
+			weight = 400,
+			style = "normal",
+			assetId = getcustomasset("main.ttf"),
+		},
+	},
 }
 
 if not isfile("main_encoded.ttf") then
-    writefile("main_encoded.ttf", http_service:JSONEncode(tahoma))
+	writefile("main_encoded.ttf", http_service:JSONEncode(tahoma))
 end
 
 library.font = Font.new(getcustomasset("main_encoded.ttf"), Enum.FontWeight.Regular)
@@ -415,21 +415,26 @@ function library:load_config(config_json)
 		local function_set = library.config_flags[_]
 
 		if function_set then
-			if type(v) == "table" and v["Transparency"] and v["Color"] then
-				function_set(hex(v["Color"]), v["Transparency"])
-			elseif type(v) == "table" and v["active"] then
-				function_set(v)
-			else
-				function_set(v)
-			end
+			task.spawn(function()
+				if type(v) == "table" and v["Transparency"] and v["Color"] then
+					function_set(hex(v["Color"]), v["Transparency"])
+				elseif type(v) == "table" and v["active"] then
+					function_set(v)
+				else
+					function_set(v)
+				end
+			end)
 		end
 	end
 end
 
 function library:load_default_config()
-	if isfile(library.directory .. "/configs/default.cfg") then
-		self:load_config(readfile(library.directory .. "/configs/default.cfg"))
-		return true
+	if isfile(library.directory .. "/autoload.txt") then
+		local config_name = readfile(library.directory .. "/autoload.txt")
+		if isfile(library.directory .. "/configs/" .. config_name .. ".cfg") then
+			self:load_config(readfile(library.directory .. "/configs/" .. config_name .. ".cfg"))
+			return true
+		end
 	end
 	return false
 end
@@ -783,13 +788,13 @@ function library:window(properties)
 	local window = {}
 	-- local button_holder
 
-	--[[local function create_dock_button(options) 
+	--[[local function create_dock_button(options)
             local cfg = {
                 image = options.image or "rbxassetid://79856374238119",
-                open = options.open or true 
+                open = options.open or true
                 callback = options.callback or function() end
             }
-    
+
             local button = library:create("TextButton", {
                 Parent = button_holder,
                 Name = "",
@@ -802,7 +807,7 @@ function library:window(properties)
                 TextSize = 14,
                 BackgroundColor3 = themes.preset.inline
             })
-            
+
             local button_inline = library:create("Frame", {
                 Parent = button,
                 Name = "",
@@ -811,8 +816,8 @@ function library:window(properties)
                 Size = dim2(1, -2, 1, -2),
                 BorderSizePixel = 0,
                 BackgroundColor3 = themes.preset.outline
-            })library:apply_theme(button_inline, "outline", "BackgroundColor3") 
-            
+            })library:apply_theme(button_inline, "outline", "BackgroundColor3")
+
             local button_inline = library:create("Frame", {
                 Parent = button_inline,
                 Name = "",
@@ -822,7 +827,7 @@ function library:window(properties)
                 BorderSizePixel = 0,
                 BackgroundColor3 = rgb(255, 255, 255)
             })library:apply_theme(button_inline, "inline", "BackgroundColor3")
-            
+
             local UIGradient = library:create("UIGradient", {
                 Parent = button_inline,
                 Name = "",
@@ -831,8 +836,8 @@ function library:window(properties)
                 rgbkey(0, rgb(35, 35, 47)),
                 rgbkey(1, rgb(41, 41, 55))
             }
-            })library:apply_theme(UIGradient, "contrast", "Color") 
-            
+            })library:apply_theme(UIGradient, "contrast", "Color")
+
             local ImageLabel = library:create("ImageLabel", {
                 Parent = button_inline,
                 Name = "",
@@ -843,8 +848,8 @@ function library:window(properties)
                 Size = dim2(1, 0, 1, 0),
                 BorderSizePixel = 0,
                 BackgroundColor3 = rgb(255, 255, 255)
-            })library:apply_theme(ImageLabel, "accent", "ImageColor3") 
-            
+            })library:apply_theme(ImageLabel, "accent", "ImageColor3")
+
             local UIPadding = library:create("UIPadding", {
                 Parent = button_inline,
                 Name = "",
@@ -853,11 +858,11 @@ function library:window(properties)
                 PaddingRight = dim(0, 4),
                 PaddingLeft = dim(0, 4)
             })
-    
+
             button.MouseButton1Click:Connect(function()
-                cfg.open = not cfg.open 
-    
-                cfg.callback(cfg.open) 
+                cfg.open = not cfg.open
+
+                cfg.callback(cfg.open)
             end)
         end ]]
 
@@ -1299,7 +1304,7 @@ function library:window(properties)
 		bool = not bool
 		path.Enabled = bool
 		tooltip_sgui.Enabled = bool
-		
+
 		if library.current_element_open then
 			library.current_element_open.set_visible(false)
 			library.current_element_open.open = false
@@ -3900,22 +3905,29 @@ function library:dropdown(options)
 	end
 
 	function cfg.set(value)
-		local selected = {}
-
 		local is_table = type(value) == "table"
+		local final_value = value
+
+		if is_table then
+			cfg.multi_items = value
+		else
+			if cfg.multi and value ~= nil then
+				final_value = { value }
+				cfg.multi_items = { value }
+				is_table = true
+			end
+		end
 
 		for _, v in next, cfg.option_instances do
-			if v.Text == value or (is_table and find(value, v.Text)) then
-				insert(selected, v.Text)
-				cfg.multi_items = selected
+			if v.Text == value or (is_table and find(final_value, v.Text)) then
 				v.TextColor3 = themes.preset.accent
 			else
 				v.TextColor3 = themes.preset.text
 			end
 		end
 
-		text.Text = is_table and concat(selected, ", ") or selected[1] or "nun"
-		flags[cfg.flag] = is_table and selected or selected[1]
+		text.Text = is_table and concat(final_value, ", ") or final_value or "nun"
+		flags[cfg.flag] = final_value
 		cfg.callback(flags[cfg.flag])
 	end
 
@@ -3971,6 +3983,10 @@ function library:dropdown(options)
 				end
 			end)
 		end
+
+		if flags[cfg.flag] ~= nil then
+			cfg.set(flags[cfg.flag])
+		end
 	end
 
 	dropdown.MouseButton1Click:Connect(function()
@@ -3993,19 +4009,19 @@ end
 
 function library:list(options)
 	local cfg = {
-        callback = options and options.callback or function() end,
+		callback = options and options.callback or function() end,
 
-        scale = options.size or 232,
-        items = options.items or { "1", "2", "3" },
-        placeholdertext = options.placeholder or options.placeholdertext or "search here...",
-        visible = options.visible == nil and true or options.visible,
+		scale = options.size or 232,
+		items = options.items or { "1", "2", "3" },
+		placeholdertext = options.placeholder or options.placeholdertext or "search here...",
+		visible = options.visible == nil and true or options.visible,
 
-        option_instances = {},
-        current_instance = nil,
-        flag = options.flag or "SET_A_FLAG",
-        multi = options.multi or false, -- enable multi-select
-        multi_items = {},              -- store selected items
-    }
+		option_instances = {},
+		current_instance = nil,
+		flag = options.flag or "SET_A_FLAG",
+		multi = options.multi or false, -- enable multi-select
+		multi_items = {},               -- store selected items
+	}
 
 	-- instances
 	local list_holder = library:create("TextLabel", {
@@ -4179,45 +4195,49 @@ function library:list(options)
 	end
 
 	function cfg.refresh_options(options)
-        if type(options) == "function" then
-            return
-        end
+		if type(options) == "function" then
+			return
+		end
 
-        for _, v in next, cfg.option_instances do
-            v:Destroy()
-        end
+		for _, v in next, cfg.option_instances do
+			v:Destroy()
+		end
 
-        cfg.option_instances = {}
+		cfg.option_instances = {}
 
-        for _, option in next, options do
-            local button = cfg.render_option(option)
+		for _, option in next, options do
+			local button = cfg.render_option(option)
 
-            insert(cfg.option_instances, button)
+			insert(cfg.option_instances, button)
 
-            button.MouseButton1Click:Connect(function()
-                if cfg.multi then
-                    local idx = find(cfg.multi_items, button.Text)
-                    if idx then
-                        remove(cfg.multi_items, idx)
-                        button.TextColor3 = themes.preset.text
-                    else
-                        insert(cfg.multi_items, button.Text)
-                        button.TextColor3 = themes.preset.accent
-                    end
-                    flags[cfg.flag] = cfg.multi_items
-                    cfg.callback(cfg.multi_items)
-                else
-                    if cfg.current_instance and cfg.current_instance ~= button then
-                        cfg.current_instance.TextColor3 = themes.preset.text
-                    end
-                    cfg.current_instance = button
-                    button.TextColor3 = themes.preset.accent
-                    flags[cfg.flag] = button.Text
-                    cfg.callback(button.Text)
-                end
-            end)
-        end
-    end
+			button.MouseButton1Click:Connect(function()
+				if cfg.multi then
+					local idx = find(cfg.multi_items, button.Text)
+					if idx then
+						remove(cfg.multi_items, idx)
+						button.TextColor3 = themes.preset.text
+					else
+						insert(cfg.multi_items, button.Text)
+						button.TextColor3 = themes.preset.accent
+					end
+					flags[cfg.flag] = cfg.multi_items
+					cfg.callback(cfg.multi_items)
+				else
+					if cfg.current_instance and cfg.current_instance ~= button then
+						cfg.current_instance.TextColor3 = themes.preset.text
+					end
+					cfg.current_instance = button
+					button.TextColor3 = themes.preset.accent
+					flags[cfg.flag] = button.Text
+					cfg.callback(button.Text)
+				end
+			end)
+		end
+
+		if flags[cfg.flag] ~= nil then
+			cfg.set(flags[cfg.flag])
+		end
+	end
 
 	function cfg.filter_options(text)
 		for _, v in next, cfg.option_instances do
@@ -4231,9 +4251,17 @@ function library:list(options)
 
 	function cfg.set(value)
 		local is_table = type(value) == "table"
+
+		if cfg.multi then
+			cfg.multi_items = is_table and value or { value }
+		end
+
 		for _, buttons in next, cfg.option_instances do
 			if (is_table and table.find(value, buttons.Text)) or (not is_table and buttons.Text == value) then
 				buttons.TextColor3 = themes.preset.accent
+				if not cfg.multi then
+					cfg.current_instance = buttons
+				end
 			else
 				buttons.TextColor3 = themes.preset.text
 			end
@@ -4583,7 +4611,7 @@ function library:button(options)
 end
 
 function library:label(options)
-	local cfg = { 
+	local cfg = {
 		name = options.text or options.name or "Label",
 		visible = options.visible == nil and true or options.visible,
 	}
@@ -5047,284 +5075,279 @@ function library:playerlist(options)
 end
 
 function library:build_settings_tab(window, themes, flags)
-    local Settings = window:tab({ name = "Settings" })
+	local Settings = window:tab({ name = "Settings" })
 
-    -- Options Section
+	-- Options Section
 	local watermark = window:watermark({
 		default = os.date("Vesteria WIP %d/%m/%Y - %H:%M:%S"),
 	})
-    local column = Settings:column()
-    local section = column:section({ name = "Options" })
-    local old_config = library:get_config()
-    config_holder = section:list({ flag = "config_name_list" })
-    section:textbox({ flag = "config_name_text_box" })
-    section:button_holder({})
-    section:button({
-        name = "Create",
-        callback = function()
-            writefile(library.directory .. "/configs/" .. flags["config_name_text_box"] .. ".cfg", library:get_config())
-            library:config_list_update()
-        end,
-    })
-    section:button({
-        name = "Delete",
-        callback = function()
-            delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
-            library:config_list_update()
-        end,
-    })
-    section:button_holder({})
-    section:button({
-        name = "Load",
-        callback = function()
-            library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))
-            library:notification({
-                text = "Loaded Config: " .. flags["config_name_list"],
-                time = 3,
-            })
-        end,
-    })
-    section:button({
-        name = "Save",
-        callback = function()
-            writefile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg", library:get_config())
-            library:config_list_update()
-            library:notification({
-                text = "Saved Config: " .. flags["config_name_list"],
-                time = 3,
-            })
-        end,
-    })
-    section:button_holder({})
-    section:button({
-        name = "Save as Default",
-        callback = function()
-            writefile(library.directory .. "/configs/default.cfg", library:get_config())
-            library:notification({
-                text = "Saved as Default Config",
-                time = 3,
-            })
-        end,
-    })
-    section:button({
-        name = "Load Default",
-        callback = function()
-            if isfile(library.directory .. "/configs/default.cfg") then
-                library:load_config(readfile(library.directory .. "/configs/default.cfg"))
-                library:notification({
-                    text = "Loaded Default Config",
-                    time = 3,
-                })
-            else
-                library:notification({
-                    text = "No Default Config Found",
-                    time = 3,
-                })
-            end
-        end,
-    })
-    section:button({
-        name = "Clear Default",
-        callback = function()
-            if isfile(library.directory .. "/configs/default.cfg") then
-                delfile(library.directory .. "/configs/default.cfg")
-                library:notification({
-                    text = "Cleared Default Config",
-                    time = 3,
-                })
-            else
-                library:notification({
-                    text = "No Default Config to Clear",
-                    time = 3,
-                })
-            end
-        end,
-    })
-    section:button_holder({})
-    section:button({
-        name = "Refresh Configs",
-        callback = function()
-            library:config_list_update()
-        end,
-    })
-    section:button_holder({})
-    section:button({
-        name = "Unload Config",
-        callback = function()
-            library:load_config(old_config)
-        end,
-    })
-    section:button({
-        name = "Unload Menu",
-        callback = function()
-            library:load_config(old_config)
-            for _, gui in ipairs(library.guis) do
-                gui:Destroy()
-            end
-            for _, connection in ipairs(library.connections) do
-                connection:Disconnect()
-            end
-        end,
-    })
+	local column = Settings:column()
+	local section = column:section({ name = "Config Options" })
+	local old_config = library:get_config()
+	config_holder = section:list({ flag = "config_name_list", size = 150 })
+	section:textbox({ flag = "config_name_text_box", placeholder = "Config name..." })
 
-    -- Theme Section
-    local column2 = Settings:column()
-    local section2 = column2:section({ name = "Theme" })
-    section2:label({ name = "Accent" }):colorpicker({
-        name = "Accent",
-        color = themes.preset.accent,
-        flag = "accent",
-        callback = function(color, alpha)
-            library:update_theme("accent", color)
-        end,
-    })
-    section2
-        :label({ name = "Contrast" })
-        :colorpicker({
-            name = "Low",
-            color = themes.preset.low_contrast,
-            flag = "low_contrast",
-            callback = function(color)
-                if flags["high_contrast"] and flags["low_contrast"] then
-                    library:update_theme(
-                        "contrast",
-                        ColorSequence.new({
-                            ColorSequenceKeypoint.new(0, flags["low_contrast"].Color),
-                            ColorSequenceKeypoint.new(1, flags["high_contrast"].Color),
-                        })
-                    )
-                end
-            end,
-        })
-        :colorpicker({
-            name = "High",
-            color = themes.preset.high_contrast,
-            flag = "high_contrast",
-            callback = function(color)
-                library:update_theme(
-                    "contrast",
-                    ColorSequence.new({
-                        ColorSequenceKeypoint.new(0, flags["low_contrast"].Color),
-                        ColorSequenceKeypoint.new(1, flags["high_contrast"].Color),
-                    })
-                )
-            end,
-        })
-    section2:label({ name = "Inline" }):colorpicker({
-        name = "Inline",
-        color = themes.preset.inline,
-        callback = function(color, alpha)
-            library:update_theme("inline", color)
-        end,
-    })
-    section2:label({ name = "Outline" }):colorpicker({
-        name = "Outline",
-        color = themes.preset.outline,
-        callback = function(color, alpha)
-            library:update_theme("outline", color)
-        end,
-    })
-    section2
-        :label({ name = "Text Color" })
-        :colorpicker({
-            name = "Main",
-            color = themes.preset.text,
-            callback = function(color, alpha)
-                library:update_theme("text", color)
-            end,
-        })
-        :colorpicker({
-            name = "Outline",
-            color = themes.preset.text_outline,
-            callback = function(color, alpha)
-                library:update_theme("text_outline", color)
-            end,
-        })
-    section2:label({ name = "Glow" }):colorpicker({
-        name = "Glow",
-        color = themes.preset.glow,
-        callback = function(color, alpha)
-            library:update_theme("glow", color)
-        end,
-    })
-    section2:label({ name = "UI Bind" }):keybind({
-        callback = window.set_menu_visibility,
-        key = Enum.KeyCode.Insert,
-    })
-    section2:toggle({
-        name = "Keybind List",
-        flag = "keybind_list",
-        callback = function(bool)
-            library.keybind_list_frame.Visible = bool
-        end,
-    })
-    section2:toggle({
-        name = "Watermark",
-        flag = "watermark",
-        callback = function(bool)
-            if watermark then
-                watermark.set_visible(bool)
-            end
-        end,
-    })
-    section2:button_holder({})
-    section2:button({
-        name = "Copy JobId",
-        callback = function()
-            setclipboard(game.JobId)
-        end,
-    })
-    section2:button_holder({})
-    section2:button({
-        name = "Copy GameID",
-        callback = function()
-            setclipboard(game.GameId)
-        end,
-    })
-    section2:button_holder({})
-    section2:button({
-        name = "Copy Join Script",
-        callback = function()
-            setclipboard(
-                'game:GetService("TeleportService"):TeleportToPlaceInstance('
-                    .. game.PlaceId
-                    .. ', "'
-                    .. game.JobId
-                    .. '", game.Players.LocalPlayer)'
-            )
-        end,
-    })
-    section2:button_holder({})
-    section2:button({
-        name = "Rejoin",
-        callback = function()
-            game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players.LocalPlayer)
-        end,
-    })
-    section2:button_holder({})
-    section2:button({
-        name = "Join New Server",
-        callback = function()
-            local apiRequest = game:GetService("HttpService"):JSONDecode(
-                game:HttpGetAsync(
-                    "https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
-                )
-            )
-            local data = apiRequest.data[math.random(1, #apiRequest.data)]
+	section:button_holder({})
+	section:button({
+		name = "Create Config",
+		callback = function()
+			local cfgName = flags["config_name_text_box"]
+			if cfgName and cfgName ~= "" then
+				writefile(library.directory .. "/configs/" .. cfgName .. ".cfg", library:get_config())
+				library:config_list_update()
+			end
+		end,
+	})
+	section:button({
+		name = "Save Config",
+		callback = function()
+			if flags["config_name_list"] then
+				writefile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg", library:get_config())
+				library:config_list_update()
+				library:notification({
+					text = "Saved Config: " .. flags["config_name_list"],
+					time = 3,
+				})
+			end
+		end,
+	})
 
-            if data.playing <= flags["max_players"] then
-                game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, data.id)
-            end
-        end,
-    })
-    section2:slider({
-        name = "Max Players",
-        flag = "max_players",
-        min = 0,
-        max = 40,
-        default = 15,
-        interval = 1,
-    })
+	section:button_holder({})
+	section:button({
+		name = "Load Config",
+		callback = function()
+			if flags["config_name_list"] then
+				library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))
+				library:notification({
+					text = "Loaded Config: " .. flags["config_name_list"],
+					time = 3,
+				})
+			end
+		end,
+	})
+	section:button({
+		name = "Delete Config",
+		callback = function()
+			if flags["config_name_list"] then
+				delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
+				library:config_list_update()
+			end
+		end,
+	})
+
+	section:button_holder({})
+	section:button({
+		name = "Set as Autoload",
+		callback = function()
+			if flags["config_name_list"] then
+				writefile(library.directory .. "/autoload.txt", flags["config_name_list"])
+				library:notification({
+					text = "Set Autoload Config: " .. flags["config_name_list"],
+					time = 3,
+				})
+			end
+		end,
+	})
+	section:button({
+		name = "Clear Autoload",
+		callback = function()
+			if isfile(library.directory .. "/autoload.txt") then
+				delfile(library.directory .. "/autoload.txt")
+				library:notification({
+					text = "Cleared Autoload Config",
+					time = 3,
+				})
+			end
+		end,
+	})
+
+	section:button_holder({})
+	section:button({
+		name = "Refresh Configs",
+		callback = function()
+			library:config_list_update()
+		end,
+	})
+
+	section:button_holder({})
+	section:button({
+		name = "Unload Config",
+		callback = function()
+			library:load_config(old_config)
+		end,
+	})
+	section:button({
+		name = "Unload Menu",
+		callback = function()
+			library:load_config(old_config)
+			for _, gui in ipairs(library.guis) do
+				gui:Destroy()
+			end
+			for _, connection in ipairs(library.connections) do
+				connection:Disconnect()
+			end
+		end,
+	})
+
+	-- Theme Section
+	local column2 = Settings:column()
+	local section2 = column2:section({ name = "Theme" })
+	section2:label({ name = "Accent" }):colorpicker({
+		name = "Accent",
+		color = themes.preset.accent,
+		flag = "accent",
+		callback = function(color, alpha)
+			library:update_theme("accent", color)
+		end,
+	})
+	section2
+		:label({ name = "Contrast" })
+		:colorpicker({
+			name = "Low",
+			color = themes.preset.low_contrast,
+			flag = "low_contrast",
+			callback = function(color)
+				if flags["high_contrast"] and flags["low_contrast"] then
+					library:update_theme(
+						"contrast",
+						ColorSequence.new({
+							ColorSequenceKeypoint.new(0, flags["low_contrast"].Color),
+							ColorSequenceKeypoint.new(1, flags["high_contrast"].Color),
+						})
+					)
+				end
+			end,
+		})
+		:colorpicker({
+			name = "High",
+			color = themes.preset.high_contrast,
+			flag = "high_contrast",
+			callback = function(color)
+				library:update_theme(
+					"contrast",
+					ColorSequence.new({
+						ColorSequenceKeypoint.new(0, flags["low_contrast"].Color),
+						ColorSequenceKeypoint.new(1, flags["high_contrast"].Color),
+					})
+				)
+			end,
+		})
+	section2:label({ name = "Inline" }):colorpicker({
+		name = "Inline",
+		color = themes.preset.inline,
+		callback = function(color, alpha)
+			library:update_theme("inline", color)
+		end,
+	})
+	section2:label({ name = "Outline" }):colorpicker({
+		name = "Outline",
+		color = themes.preset.outline,
+		callback = function(color, alpha)
+			library:update_theme("outline", color)
+		end,
+	})
+	section2
+		:label({ name = "Text Color" })
+		:colorpicker({
+			name = "Main",
+			color = themes.preset.text,
+			callback = function(color, alpha)
+				library:update_theme("text", color)
+			end,
+		})
+		:colorpicker({
+			name = "Outline",
+			color = themes.preset.text_outline,
+			callback = function(color, alpha)
+				library:update_theme("text_outline", color)
+			end,
+		})
+	section2:label({ name = "Glow" }):colorpicker({
+		name = "Glow",
+		color = themes.preset.glow,
+		callback = function(color, alpha)
+			library:update_theme("glow", color)
+		end,
+	})
+	section2:label({ name = "UI Bind" }):keybind({
+		callback = window.set_menu_visibility,
+		key = Enum.KeyCode.Insert,
+	})
+	section2:toggle({
+		name = "Keybind List",
+		flag = "keybind_list",
+		callback = function(bool)
+			library.keybind_list_frame.Visible = bool
+		end,
+	})
+	section2:toggle({
+		name = "Watermark",
+		flag = "watermark",
+		callback = function(bool)
+			if watermark then
+				watermark.set_visible(bool)
+			end
+		end,
+	})
+	section2:button_holder({})
+	section2:button({
+		name = "Copy JobId",
+		callback = function()
+			setclipboard(game.JobId)
+		end,
+	})
+	section2:button_holder({})
+	section2:button({
+		name = "Copy GameID",
+		callback = function()
+			setclipboard(game.GameId)
+		end,
+	})
+	section2:button_holder({})
+	section2:button({
+		name = "Copy Join Script",
+		callback = function()
+			setclipboard(
+				'game:GetService("TeleportService"):TeleportToPlaceInstance('
+				.. game.PlaceId
+				.. ', "'
+				.. game.JobId
+				.. '", game.Players.LocalPlayer)'
+			)
+		end,
+	})
+	section2:button_holder({})
+	section2:button({
+		name = "Rejoin",
+		callback = function()
+			game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, game.JobId, game.Players
+			.LocalPlayer)
+		end,
+	})
+	section2:button_holder({})
+	section2:button({
+		name = "Join New Server",
+		callback = function()
+			local apiRequest = game:GetService("HttpService"):JSONDecode(
+				game:HttpGetAsync(
+					"https://games.roblox.com/v1/games/" .. game.PlaceId .. "/servers/Public?sortOrder=Asc&limit=100"
+				)
+			)
+			local data = apiRequest.data[math.random(1, #apiRequest.data)]
+
+			if data.playing <= flags["max_players"] then
+				game:GetService("TeleportService"):TeleportToPlaceInstance(game.PlaceId, data.id)
+			end
+		end,
+	})
+	section2:slider({
+		name = "Max Players",
+		flag = "max_players",
+		min = 0,
+		max = 40,
+		default = 15,
+		interval = 1,
+	})
 
 	library:config_list_update()
 
@@ -5334,13 +5357,13 @@ function library:build_settings_tab(window, themes, flags)
 		end)
 	end
 
-    return Settings
+	return Settings
 end
 
-return { 
-    library = library,
-    themes = themes,
-    flags = flags
+return {
+	library = library,
+	themes = themes,
+	flags = flags
 }
 
 --[[

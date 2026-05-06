@@ -415,15 +415,13 @@ function library:load_config(config_json)
 		local function_set = library.config_flags[_]
 
 		if function_set then
-			task.spawn(function()
-				if type(v) == "table" and v["Transparency"] and v["Color"] then
-					function_set(hex(v["Color"]), v["Transparency"])
-				elseif type(v) == "table" and v["active"] then
-					function_set(v)
-				else
-					function_set(v)
-				end
-			end)
+			if type(v) == "table" and v["Transparency"] and v["Color"] then
+				function_set(hex(v["Color"]), v["Transparency"])
+			elseif type(v) == "table" and v["active"] then
+				function_set(v)
+			else
+				function_set(v)
+			end
 		end
 	end
 end
@@ -2356,8 +2354,7 @@ function library:slider(options)
 		fill.Size = dim2((cfg.value - cfg.min) / (cfg.max - cfg.min), 0, 1, 0)
 		slidertext.Text = tostring(cfg.value) .. cfg.suffix .. "/" .. tostring(cfg.max) .. cfg.suffix
 		flags[cfg.flag] = cfg.value
-
-		cfg.callback(flags[cfg.flag])
+		task.spawn(cfg.callback, flags[cfg.flag])
 	end
 
 	function cfg.set_element_visible(bool)
@@ -2543,11 +2540,12 @@ function library:toggle(options)
 	--
 
 	function cfg.set(bool)
+		cfg.enabled = bool
 		background.BackgroundColor3 = bool and themes.preset.accent or themes.preset.inline
 
 		flags[cfg.flag] = bool
 
-		cfg.callback(bool)
+		task.spawn(cfg.callback, bool)
 	end
 
 	function cfg.set_element_visible(bool)
@@ -3069,8 +3067,7 @@ function library:colorpicker(options)
 		flags[cfg.flag] = {}
 		flags[cfg.flag]["Color"] = Color
 		flags[cfg.flag]["Transparency"] = a
-
-		cfg.callback(Color, a)
+		task.spawn(cfg.callback, Color, a)
 	end
 
 	function cfg.update_color()
@@ -3384,7 +3381,7 @@ function library:keybind(options)
 
 			cfg.active = __cached
 			flags[cfg.flag]["active"] = __cached
-			cfg.callback(__cached)
+			task.spawn(cfg.callback, __cached)
 		elseif tostring(input):find("Enum") then
 			input = input.Name == "Escape" and "..." or input
 
@@ -3399,7 +3396,7 @@ function library:keybind(options)
 
 			key_text.Text = string.lower(_text2)
 
-			cfg.callback(cfg.active or false)
+			task.spawn(cfg.callback, cfg.active or false)
 		elseif find({ "toggle", "hold", "always" }, input) then
 			cfg.set_mode(input)
 
@@ -3407,7 +3404,7 @@ function library:keybind(options)
 				cfg.active = true
 			end
 
-			cfg.callback(cfg.active or false)
+			task.spawn(cfg.callback, cfg.active or false)
 		elseif type(input) == "table" then
 			input.key = type(input.key) == "string" and input.key ~= "..." and library:convert_enum(input.key)
 				or input.key
@@ -3928,7 +3925,7 @@ function library:dropdown(options)
 
 		text.Text = is_table and concat(final_value, ", ") or final_value or "nun"
 		flags[cfg.flag] = final_value
-		cfg.callback(flags[cfg.flag])
+		task.spawn(cfg.callback, flags[cfg.flag])
 	end
 
 	function cfg:refresh_options(refreshed_list)
@@ -4221,7 +4218,7 @@ function library:list(options)
 						button.TextColor3 = themes.preset.accent
 					end
 					flags[cfg.flag] = cfg.multi_items
-					cfg.callback(cfg.multi_items)
+					task.spawn(cfg.callback, cfg.multi_items)
 				else
 					if cfg.current_instance and cfg.current_instance ~= button then
 						cfg.current_instance.TextColor3 = themes.preset.text
@@ -4229,7 +4226,7 @@ function library:list(options)
 					cfg.current_instance = button
 					button.TextColor3 = themes.preset.accent
 					flags[cfg.flag] = button.Text
-					cfg.callback(button.Text)
+					task.spawn(cfg.callback, button.Text)
 				end
 			end)
 		end
@@ -4267,8 +4264,8 @@ function library:list(options)
 			end
 		end
 
-		flags[cfg.flag] = value
-		cfg.callback(value)
+		flags[cfg.flag] = cfg.multi and cfg.multi_items or value
+		task.spawn(cfg.callback, flags[cfg.flag])
 	end
 
 	cfg.refresh_options(cfg.items)
@@ -4425,7 +4422,7 @@ function library:textbox(options)
 
 	TextBox:GetPropertyChangedSignal("Text"):Connect(function()
 		flags[cfg.flag] = TextBox.text
-		cfg.callback(TextBox.text)
+		task.spawn(cfg.callback, TextBox.text)
 	end)
 	--
 
@@ -4436,7 +4433,7 @@ function library:textbox(options)
 	function cfg.set(text)
 		flags[cfg.flag] = text
 		TextBox.Text = text
-		cfg.callback(text)
+		task.spawn(cfg.callback, text)
 	end
 
 	if cfg.default then
@@ -4604,7 +4601,7 @@ function library:button(options)
 	})
 
 	button.MouseButton1Click:Connect(function()
-		cfg.callback()
+		task.spawn(cfg.callback)
 	end)
 
 	return setmetatable(cfg, library)
@@ -5083,6 +5080,13 @@ function library:build_settings_tab(window, themes, flags)
 	})
 	local column = Settings:column()
 	local section = column:section({ name = "Config Options" })
+
+	local current_autoload = "None"
+	if isfile(library.directory .. "/autoload.txt") then
+		current_autoload = readfile(library.directory .. "/autoload.txt")
+	end
+	local autoload_label = section:label({ name = "Autoload: " .. current_autoload })
+
 	local old_config = library:get_config()
 	config_holder = section:list({ flag = "config_name_list", size = 150 })
 	section:textbox({ flag = "config_name_text_box", placeholder = "Config name..." })
@@ -5141,6 +5145,7 @@ function library:build_settings_tab(window, themes, flags)
 		callback = function()
 			if flags["config_name_list"] then
 				writefile(library.directory .. "/autoload.txt", flags["config_name_list"])
+				autoload_label.change_text("Autoload: " .. flags["config_name_list"])
 				library:notification({
 					text = "Set Autoload Config: " .. flags["config_name_list"],
 					time = 3,
@@ -5153,6 +5158,7 @@ function library:build_settings_tab(window, themes, flags)
 		callback = function()
 			if isfile(library.directory .. "/autoload.txt") then
 				delfile(library.directory .. "/autoload.txt")
+				autoload_label.change_text("Autoload: None")
 				library:notification({
 					text = "Cleared Autoload Config",
 					time = 3,
@@ -5576,78 +5582,126 @@ section:dropdown({
 
 -- Settings
 getgenv().load_config = function(name)
-    library:load_config(readfile(library.directory .. "/configs/" .. name .. ".cfg"))
+	library:load_config(readfile(library.directory .. "/configs/" .. name .. ".cfg"))
 end
 
 local column = Settings:column()
-local section = column:section({ name = "Options" })
+local section = column:section({ name = "Config Options" })
+
+local current_autoload = "None"
+if isfile(library.directory .. "/autoload.txt") then
+	current_autoload = readfile(library.directory .. "/autoload.txt")
+end
+local autoload_label = section:label({ name = "Autoload: " .. current_autoload })
+
 local old_config = library:get_config()
-config_holder = section:list({ flag = "config_name_list" })
-section:textbox({ flag = "config_name_text_box" })
-section:button_holder({})
-section:button({
-    name = "Create",
-    callback = function()
-        writefile(library.directory .. "/configs/" .. flags["config_name_text_box"] .. ".cfg", library:get_config())
-        library:config_list_update()
-    end,
-})
-section:button({
-    name = "Delete",
-    callback = function()
-        delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
-        library:config_list_update()
-    end,
-})
-section:button_holder({})
-section:button({
-    name = "Load",
-    callback = function()
-        library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))
-        library:notification({
-            text = "Loaded Config: " .. flags["config_name_list"],
-            time = 3,
-        })
-    end,
-})
-section:button({
-    name = "Save",
-    callback = function()
-        writefile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg", library:get_config())
-        library:config_list_update()
-        library:notification({
-            text = "Saved Config: " .. flags["config_name_list"],
-            time = 3,
-        })
-    end,
-})
-section:button_holder({})
-section:button({
-    name = "Refresh Configs",
-    callback = function()
-        library:config_list_update()
-    end,
-})
-section:button_holder({})
-section:button({
-    name = "Unload Config",
-    callback = function()
-        library:load_config(old_config)
-    end,
-})
-section:button({
-    name = "Unload Menu",
-    callback = function()
-        library:load_config(old_config)
+config_holder = section:list({ flag = "config_name_list", size = 150 })
+section:textbox({ flag = "config_name_text_box", placeholder = "Config name..." })
 
-        for _, gui in ipairs(library.guis) do
-            gui:Destroy()
-        end
+section:button_holder({})
+section:button({
+	name = "Create Config",
+	callback = function()
+		local cfgName = flags["config_name_text_box"]
+		if cfgName and cfgName ~= "" then
+			writefile(library.directory .. "/configs/" .. cfgName .. ".cfg", library:get_config())
+			library:config_list_update()
+		end
+	end,
+})
+section:button({
+	name = "Save Config",
+	callback = function()
+		if flags["config_name_list"] then
+			writefile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg", library:get_config())
+			library:config_list_update()
+			library:notification({
+				text = "Saved Config: " .. flags["config_name_list"],
+				time = 3,
+			})
+		end
+	end,
+})
 
-        for _, connection in ipairs(library.connections) do
-            connection:Disconnect()
-        end
-    end,
+section:button_holder({})
+section:button({
+	name = "Load Config",
+	callback = function()
+		if flags["config_name_list"] then
+			library:load_config(readfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg"))
+			library:notification({
+				text = "Loaded Config: " .. flags["config_name_list"],
+				time = 3,
+			})
+		end
+	end,
+})
+section:button({
+	name = "Delete Config",
+	callback = function()
+		if flags["config_name_list"] then
+			delfile(library.directory .. "/configs/" .. flags["config_name_list"] .. ".cfg")
+			library:config_list_update()
+		end
+	end,
+})
+
+section:button_holder({})
+section:button({
+	name = "Set as Autoload",
+	callback = function()
+		if flags["config_name_list"] then
+			writefile(library.directory .. "/autoload.txt", flags["config_name_list"])
+			autoload_label.change_text("Autoload: " .. flags["config_name_list"])
+			library:notification({
+				text = "Set Autoload Config: " .. flags["config_name_list"],
+				time = 3,
+			})
+		end
+	end,
+})
+section:button({
+	name = "Clear Autoload",
+	callback = function()
+		if isfile(library.directory .. "/autoload.txt") then
+			delfile(library.directory .. "/autoload.txt")
+			autoload_label.change_text("Autoload: None")
+			library:notification({
+				text = "Cleared Autoload Config",
+				time = 3,
+			})
+		end
+	end,
+})
+
+section:button_holder({})
+section:button({
+	name = "Refresh Configs",
+	callback = function()
+		library:config_list_update()
+	end,
+})
+
+section:button_holder({})
+section:button({
+	name = "Unload Config",
+	callback = function()
+		library:load_config(old_config)
+	end,
+})
+section:button({
+	name = "Unload Menu",
+	callback = function()
+		library:load_config(old_config)
+
+		for _, gui in ipairs(library.guis) do
+			gui:Destroy()
+		end
+
+		for _, connection in ipairs(library.connections) do
+			connection:Disconnect()
+		end
+	end,
 })
 
 local column = Settings:column()

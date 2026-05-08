@@ -70,6 +70,7 @@ local library = {
 		"/fonts",
 		"/configs",
 		"/images",
+		"/autoload",
 	},
 	flags = {},
 	config_flags = {},
@@ -427,12 +428,26 @@ function library:load_config(config_json)
 end
 
 function library:load_default_config()
-	if isfile(library.directory .. "/autoload.txt") then
-		local config_name = readfile(library.directory .. "/autoload.txt")
-		if isfile(library.directory .. "/configs/" .. config_name .. ".cfg") then
-			self:load_config(readfile(library.directory .. "/configs/" .. config_name .. ".cfg"))
-			return true
-		end
+	local player_id = tostring(players.LocalPlayer.UserId)
+	local global_path = library.directory .. "/autoload/global.txt"
+	local player_path = library.directory .. "/autoload/" .. player_id .. ".txt"
+
+	local old_path = library.directory .. "/autoload.txt"
+	if isfile(old_path) and not isfile(global_path) then
+		writefile(global_path, readfile(old_path))
+		delfile(old_path)
+	end
+
+	local config_name
+	if isfile(player_path) then
+		config_name = readfile(player_path)
+	elseif isfile(global_path) then
+		config_name = readfile(global_path)
+	end
+
+	if config_name and isfile(library.directory .. "/configs/" .. config_name .. ".cfg") then
+		self:load_config(readfile(library.directory .. "/configs/" .. config_name .. ".cfg"))
+		return true
 	end
 	return false
 end
@@ -5081,11 +5096,23 @@ function library:build_settings_tab(window, themes, flags)
 	local column = Settings:column()
 	local section = column:section({ name = "Config Options" })
 
-	local current_autoload = "None"
-	if isfile(library.directory .. "/autoload.txt") then
-		current_autoload = readfile(library.directory .. "/autoload.txt")
-	end
-	local autoload_label = section:label({ name = "Autoload: " .. current_autoload })
+	local player_id = tostring(players.LocalPlayer.UserId)
+	local global_path = library.directory .. "/autoload/global.txt"
+	local player_path = library.directory .. "/autoload/" .. player_id .. ".txt"
+
+	local current_global = isfile(global_path) and readfile(global_path) or "None"
+	local current_player = isfile(player_path) and readfile(player_path) or "None"
+
+	local autoload_global_label = section:label({ name = "Global Autoload: " .. current_global })
+	local autoload_player_label = section:label({ name = "Player Autoload: " .. current_player })
+
+	section:dropdown({
+		name = "Autoload Scope",
+		flag = "autoload_scope",
+		items = {"Global", "Player"},
+		default = "Global",
+		multi = false
+	})
 
 	local old_config = library:get_config()
 	config_holder = section:list({ flag = "config_name_list", size = 150 })
@@ -5144,10 +5171,16 @@ function library:build_settings_tab(window, themes, flags)
 		name = "Set as Autoload",
 		callback = function()
 			if flags["config_name_list"] then
-				writefile(library.directory .. "/autoload.txt", flags["config_name_list"])
-				autoload_label.change_text("Autoload: " .. flags["config_name_list"])
+				local scope = flags["autoload_scope"] == "Player" and "Player" or "Global"
+				if scope == "Player" then
+					writefile(player_path, flags["config_name_list"])
+					autoload_player_label.change_text("Player Autoload: " .. flags["config_name_list"])
+				else
+					writefile(global_path, flags["config_name_list"])
+					autoload_global_label.change_text("Global Autoload: " .. flags["config_name_list"])
+				end
 				library:notification({
-					text = "Set Autoload Config: " .. flags["config_name_list"],
+					text = "Set " .. scope .. " Autoload Config: " .. flags["config_name_list"],
 					time = 3,
 				})
 			end
@@ -5156,16 +5189,25 @@ function library:build_settings_tab(window, themes, flags)
 	section:button({
 		name = "Clear Autoload",
 		callback = function()
-			if isfile(library.directory .. "/autoload.txt") then
-				delfile(library.directory .. "/autoload.txt")
-				autoload_label.change_text("Autoload: None")
-				library:notification({
-					text = "Cleared Autoload Config",
-					time = 3,
-				})
+			local scope = flags["autoload_scope"] == "Player" and "Player" or "Global"
+			if scope == "Player" then
+				if isfile(player_path) then
+					delfile(player_path)
+				end
+				autoload_player_label.change_text("Player Autoload: None")
+			else
+				if isfile(global_path) then
+					delfile(global_path)
+				end
+				autoload_global_label.change_text("Global Autoload: None")
 			end
+			library:notification({
+				text = "Cleared " .. scope .. " Autoload Config",
+				time = 3,
+			})
 		end,
 	})
+
 
 	section:button_holder({})
 	section:button({
@@ -5588,11 +5630,23 @@ end
 local column = Settings:column()
 local section = column:section({ name = "Config Options" })
 
-local current_autoload = "None"
-if isfile(library.directory .. "/autoload.txt") then
-	current_autoload = readfile(library.directory .. "/autoload.txt")
-end
-local autoload_label = section:label({ name = "Autoload: " .. current_autoload })
+local player_id = tostring(players.LocalPlayer.UserId)
+local global_path = library.directory .. "/autoload/global.txt"
+local player_path = library.directory .. "/autoload/" .. player_id .. ".txt"
+
+local current_global = isfile(global_path) and readfile(global_path) or "None"
+local current_player = isfile(player_path) and readfile(player_path) or "None"
+
+local autoload_global_label = section:label({ name = "Global Autoload: " .. current_global })
+local autoload_player_label = section:label({ name = "Player Autoload: " .. current_player })
+
+section:dropdown({
+	name = "Autoload Scope",
+	flag = "autoload_scope_dup",
+	items = {"Global", "Player"},
+	default = "Global",
+	multi = false
+})
 
 local old_config = library:get_config()
 config_holder = section:list({ flag = "config_name_list", size = 150 })
@@ -5651,10 +5705,16 @@ section:button({
 	name = "Set as Autoload",
 	callback = function()
 		if flags["config_name_list"] then
-			writefile(library.directory .. "/autoload.txt", flags["config_name_list"])
-			autoload_label.change_text("Autoload: " .. flags["config_name_list"])
+			local scope = flags["autoload_scope_dup"] == "Player" and "Player" or "Global"
+			if scope == "Player" then
+				writefile(player_path, flags["config_name_list"])
+				autoload_player_label.change_text("Player Autoload: " .. flags["config_name_list"])
+			else
+				writefile(global_path, flags["config_name_list"])
+				autoload_global_label.change_text("Global Autoload: " .. flags["config_name_list"])
+			end
 			library:notification({
-				text = "Set Autoload Config: " .. flags["config_name_list"],
+				text = "Set " .. scope .. " Autoload Config: " .. flags["config_name_list"],
 				time = 3,
 			})
 		end
@@ -5663,16 +5723,25 @@ section:button({
 section:button({
 	name = "Clear Autoload",
 	callback = function()
-		if isfile(library.directory .. "/autoload.txt") then
-			delfile(library.directory .. "/autoload.txt")
-			autoload_label.change_text("Autoload: None")
-			library:notification({
-				text = "Cleared Autoload Config",
-				time = 3,
-			})
+		local scope = flags["autoload_scope_dup"] == "Player" and "Player" or "Global"
+		if scope == "Player" then
+			if isfile(player_path) then
+				delfile(player_path)
+			end
+			autoload_player_label.change_text("Player Autoload: None")
+		else
+			if isfile(global_path) then
+				delfile(global_path)
+			end
+			autoload_global_label.change_text("Global Autoload: None")
 		end
+		library:notification({
+			text = "Cleared " .. scope .. " Autoload Config",
+			time = 3,
+		})
 	end,
 })
+
 
 section:button_holder({})
 section:button({

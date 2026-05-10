@@ -2174,6 +2174,7 @@ function library:slider(options)
 	local cfg = {
 		name = options.name or nil,
 		suffix = options.suffix or "",
+		format_value = options.format_value,
 		flag = options.flag or tostring(2 ^ 789),
 		callback = options.callback or function() end,
 		visible = options.visible == nil and true or options.visible,
@@ -2367,7 +2368,13 @@ function library:slider(options)
 		cfg.value = math.clamp(library:round(value, cfg.intervals), cfg.min, cfg.max)
 
 		fill.Size = dim2((cfg.value - cfg.min) / (cfg.max - cfg.min), 0, 1, 0)
-		slidertext.Text = tostring(cfg.value) .. cfg.suffix .. "/" .. tostring(cfg.max) .. cfg.suffix
+		
+		if cfg.format_value then
+			slidertext.Text = cfg.format_value(cfg.value, cfg.max)
+		else
+			slidertext.Text = tostring(cfg.value) .. cfg.suffix .. "/" .. tostring(cfg.max) .. cfg.suffix
+		end
+		
 		flags[cfg.flag] = cfg.value
 		task.spawn(cfg.callback, flags[cfg.flag])
 	end

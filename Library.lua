@@ -2175,7 +2175,7 @@ function library:slider(options)
 		name = options.name or nil,
 		suffix = options.suffix or "",
 		format_value = options.format_value,
-		flag = options.flag or tostring(2 ^ 789),
+		flag = options.flag or (options.name and options.name .. "_slider") or tostring(random(1, 9999999)),
 		callback = options.callback or function() end,
 		visible = options.visible == nil and true or options.visible,
 
@@ -2605,7 +2605,7 @@ function library:colorpicker(options)
 
 	local cfg = {
 		name = options.name or "Color",
-		flag = options.flag or tostring(2 ^ 789),
+		flag = options.flag or (self.flag and self.flag .. "_colorpicker") or (options.name and options.name .. "_colorpicker") or tostring(random(1, 9999999)),
 		color = options.color or color(1, 1, 1), -- Default to white color if not provided
 		alpha = options.alpha or 1,
 		callback = options.callback or function() end,
@@ -3156,7 +3156,7 @@ function library:keybind(options)
 	local parent = self.right_holder
 
 	local cfg = {
-		flag = options.flag or "SET ME A FLAG NOWWW!!!!",
+		flag = options.flag or (self.flag and self.flag .. "_keybind") or (options.name and options.name .. "_keybind") or tostring(random(1, 9999999)),
 		callback = options.callback or function() end,
 		open = false,
 		binding = nil,
@@ -4037,7 +4037,7 @@ function library:list(options)
 
 		option_instances = {},
 		current_instance = nil,
-		flag = options.flag or "SET_A_FLAG",
+		flag = options.flag or (options.name and options.name .. "_list") or tostring(random(1, 9999999)),
 		multi = options.multi or false, -- enable multi-select
 		multi_items = {},               -- store selected items
 	}
@@ -4307,7 +4307,7 @@ function library:textbox(options)
 			or options.holdertext
 			or "type here...",
 		default = options.default,
-		flag = options.flag or "SET ME NIGGA",
+		flag = options.flag or (options.name and options.name .. "_textbox") or tostring(random(1, 9999999)),
 		callback = options.callback or function() end,
 		visible = options.visible == nil and true or options.visible,
 	}
@@ -4472,7 +4472,7 @@ end
 
 function library:button_holder(options)
 	local cfg = {
-		flag = options.flag or "hi",
+		flag = options.flag or tostring(random(1, 9999999)),
 		visible = options.visible == nil and true or options.visible,
 	}
 

@@ -65,7 +65,7 @@ local concat = table.concat
 
 -- library init
 local library = {
-	directory = "PremiumReaper",
+	directory = "KiritHub",
 	folders = {
 		"/fonts",
 		"/configs",
@@ -199,6 +199,10 @@ local keys = {
 
 library.__index = library
 
+if not isfolder(library.directory) then
+	makefolder(library.directory)
+end
+
 for _, path in next, library.folders do
 	if not isfolder(library.directory .. path) then
 		makefolder(library.directory .. path)
@@ -208,7 +212,7 @@ end
 if not isfile("main.ttf") then
 	writefile("main.ttf", game:HttpGet("https://github.com/PremiumReaper/Atlanta/raw/refs/heads/main/atlanta_font.ttf"))
 end
-
+	
 local tahoma = {
 	name = "SmallestPixel7",
 	faces = {
@@ -377,10 +381,10 @@ function library:config_list_update()
 	local list = {}
 
 	for idx, file in next, listfiles(library.directory .. "/configs") do
-		local name = file:gsub(library.directory .. "/configs\\", "")
-			:gsub(".cfg", "")
-			:gsub(library.directory .. "\\configs\\", "")
-		list[#list + 1] = name
+		local name = file:match("([^/\\]+)%.cfg$")
+		if name then
+			list[#list + 1] = name
+		end
 	end
 
 	config_holder.refresh_options(list)

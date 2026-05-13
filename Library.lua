@@ -4392,7 +4392,7 @@ function library:textbox(options)
 		TextWrapped = true,
 		BackgroundTransparency = 1,
 		TextTruncate = Enum.TextTruncate.SplitWord,
-		PlaceholderText = "Type here...",
+		PlaceholderText = cfg.placeholder or "Type here...",
 		ClearTextOnFocus = false,
 		TextSize = 12,
 		BackgroundColor3 = rgb(255, 255, 255),

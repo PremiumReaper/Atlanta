@@ -4635,6 +4635,25 @@ function library:button(options)
 	return setmetatable(cfg, library)
 end
 
+function library:variable(options)
+	local cfg = {
+		flag = options.flag or tostring(random(1, 9999999)),
+		default = options.default or nil,
+		callback = options.callback or function() end,
+	}
+
+	flags[cfg.flag] = cfg.default
+
+	function cfg.set(value)
+		flags[cfg.flag] = value
+		task.spawn(cfg.callback, flags[cfg.flag])
+	end
+
+	library.config_flags[cfg.flag] = cfg.set
+
+	return setmetatable(cfg, library)
+end
+
 function library:label(options)
 	local cfg = {
 		name = options.text or options.name or "Label",

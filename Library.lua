@@ -268,14 +268,15 @@ function library:make_resizable(frame)
 
 	library:connection(uis.InputChanged, function(input, game_event)
 		if resizing and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local viewport_x = camera.ViewportSize.X
-			local viewport_y = camera.ViewportSize.Y
+			local current_camera = ws.CurrentCamera or camera
+			local viewport_x = current_camera.ViewportSize.X
+			local viewport_y = current_camera.ViewportSize.Y
 
 			local current_size = dim2(
 				start_size.X.Scale,
-				math.clamp(start_size.X.Offset + (input.Position.X - start.X), og_size.X.Offset, viewport_x),
+				math.clamp(start_size.X.Offset + (input.Position.X - start.X), og_size.X.Offset, max(og_size.X.Offset, viewport_x)),
 				start_size.Y.Scale,
-				math.clamp(start_size.Y.Offset + (input.Position.Y - start.Y), og_size.Y.Offset, viewport_y)
+				math.clamp(start_size.Y.Offset + (input.Position.Y - start.Y), og_size.Y.Offset, max(og_size.Y.Offset, viewport_y))
 			)
 			frame.Size = current_size
 		end
@@ -309,14 +310,15 @@ function library:draggify(frame)
 
 	library:connection(uis.InputChanged, function(input, game_event)
 		if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
-			local viewport_x = camera.ViewportSize.X
-			local viewport_y = camera.ViewportSize.Y
+			local current_camera = ws.CurrentCamera or camera
+			local viewport_x = current_camera.ViewportSize.X
+			local viewport_y = current_camera.ViewportSize.Y
 
 			local current_position = dim2(
 				0,
-				clamp(start_size.X.Offset + (input.Position.X - start.X), 0, viewport_x - frame.Size.X.Offset),
+				clamp(start_size.X.Offset + (input.Position.X - start.X), 0, max(0, viewport_x - frame.Size.X.Offset)),
 				0,
-				clamp(start_size.Y.Offset + (input.Position.Y - start.Y), 0, viewport_y - frame.Size.Y.Offset)
+				clamp(start_size.Y.Offset + (input.Position.Y - start.Y), 0, max(0, viewport_y - frame.Size.Y.Offset))
 			)
 
 			frame.Position = current_position
